@@ -760,7 +760,24 @@ class BaseHandler(
             values: dict. The key-value pairs to include in the response.
         """
 
+        # Add debug logging
+        logging.error(f"=== _render_exception_json_or_html ===")
+        logging.error(f"Return type: {return_type}")
+        logging.error(f"Values: {values}")
+        logging.error(f"Method: {self.request.environ['REQUEST_METHOD']}")
+
         method = self.request.environ['REQUEST_METHOD']
+
+        # For 404 errors on GET requests to explore pages, always return HTML
+        if (
+            values['status_code'] == 404
+            and method == 'GET'
+            and '/explore/' in self.request.uri
+        ):
+            logging.error("Forcing HTML response for 404 on explore page")
+            self.values.update(values)
+            self.render_template('oppia-root.mainpage.html')
+            return
 
         if return_type == feconf.HANDLER_TYPE_HTML and method == 'GET':
             self.values.update(values)
@@ -769,6 +786,12 @@ class BaseHandler(
                 # has access to the path, not to the status code.
                 # That's why 404 status code is treated differently.
                 self.render_template('oppia-root.mainpage.html')
+            else:
+                logging.error(
+                    f"Rendering error page for status {values['status_code']}"
+                )
+                self.render_template('oppia-root.mainpage.html')
+
         else:
             if return_type not in (
                 feconf.HANDLER_TYPE_JSON,
@@ -789,6 +812,15 @@ class BaseHandler(
         # generated via webpack.common.config.ts.
         assert values['status_code'] in [400, 401, 404, 405, 500]
         method = self.request.environ['REQUEST_METHOD']
+
+        # Adding debug logging
+        logging.error(f"=== RENDERING EXCEPTION ===")
+        logging.error(f"Status code: {values['status_code']}")
+        logging.error(f"Error message: {values['error']}")
+        logging.error(f"Method: {method}")
+        logging.error(
+            f"GET_HANDLER_ERROR_RETURN_TYPE: {self.GET_HANDLER_ERROR_RETURN_TYPE}"
+        )
 
         if method == 'GET':
             self._render_exception_json_or_html(
@@ -864,6 +896,15 @@ class BaseHandler(
             unused_debug_mode: bool. True if the web application is running
                 in debug mode.
         """
+        # adding debug logging
+        logging.error(f"=== EXCEPTION HANDLER CALLED ===")
+        logging.error(f"Exception type: {type(exception).__name__}")
+        logging.error(f"Exception: {str(exception)}")
+        logging.error(f"Request URI: {self.request.uri}")
+        logging.error(
+            f"Request method: {self.request.environ['REQUEST_METHOD']}"
+        )
+
         handler_class_name = self.__class__.__name__
         request_method = self.request.environ['REQUEST_METHOD']
         exception_type = type(exception).__name__

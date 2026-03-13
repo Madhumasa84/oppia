@@ -102,7 +102,7 @@ class ExplorationHandler(
 ):
     """Provides the initial data for a single exploration."""
 
-    GET_HANDLER_ERROR_RETURN_TYPE = feconf.HANDLER_TYPE_JSON
+    GET_HANDLER_ERROR_RETURN_TYPE = feconf.HANDLER_TYPE_HTML
     URL_PATH_ARGS_SCHEMAS = {
         'exploration_id': {
             'schema': {
@@ -153,6 +153,11 @@ class ExplorationHandler(
         Args:
             exploration_id: str. The ID of the exploration.
         """
+        logging.error(f"=== ExplorationHandler.get() CALLED ===")
+        logging.error(f"Exploration ID: {exploration_id}")
+        logging.error(f"User ID: {self.user_id}")
+        logging.error(f"Is logged in: {bool(self.user_id)}")
+
         assert self.normalized_request is not None
         version = self.normalized_request.get('v')
         unique_progress_url_id = self.normalized_request.get('pid')
@@ -160,6 +165,12 @@ class ExplorationHandler(
         exploration = exp_fetchers.get_exploration_by_id(
             exploration_id, strict=False, version=version
         )
+
+        # Adding debug logging
+        logging.error(f"=== EXPLORATION HANDLER ===")
+        logging.error(f"Exploration ID: {exploration_id}")
+        logging.error(f"Exploration found: {exploration is not None}")
+
         if exploration is None:
             raise self.NotFoundException()
 
